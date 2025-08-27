@@ -1,3 +1,4 @@
+
 package com.hdfc.Model;
 
 import java.time.LocalDateTime;
@@ -17,53 +18,51 @@ import jakarta.persistence.Table;
 @Table(name = "transactions")
 public class Transaction {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "transaction_id")
-	private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "transaction_id")
+    private Long id;
 
-	@Column(unique = true, nullable = false)
-	private String referenceId = UUID.randomUUID().toString();
+    @Column(name = "reference_id", nullable = false)
+    private String referenceId = UUID.randomUUID().toString();
 
-	
-	
-	
-	
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "account_id", nullable = false)
-	private Account account; // Actual account linked
-	
-	
-	
-	
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "account_id", nullable = false)
+    private Account account;
 
-	private String fromAccount; // for transfer/withdrawal
-	private String toAccount; // for transfer/deposit
+    private String fromAccount;
+    private String toAccount;
 
-	@Column(nullable = false)
-	private String transactionType; // DEPOSIT, WITHDRAWAL, TRANSFER_SENT, TRANSFER_RECEIVED
+    @Column(nullable = false)
+    private String transactionType; // DEPOSIT, WITHDRAWAL, TRANSFER_SENT, TRANSFER_RECEIVED
 
-	@Column(nullable = false)
-	private double amount;
+    @Column(nullable = false)
+    private double amount;
 
-	@Column(nullable = false)
-	private double availableBalance;
+    @Column(nullable = false)
+    private double availableBalance;
 
-	private String channel; // BRANCH, ATM, UPI etc.
+    private String channel;
+    private String initiatedBy;
+    private String remarks;
 
-	private String initiatedBy; // ADMIN, CUSTOMER, SYSTEM
+    @Column(nullable = false)
+    private String status; // SUCCESS, FAILED, PENDING
 
-	private String remarks;
+    private String descriptioncreditanddebit;
+ 
 
-	@Column(nullable = false)
-	private String status; // SUCCESS, FAILED, PENDING
+    private LocalDateTime transactionTime = LocalDateTime.now();
 
-	private LocalDateTime transactionTime = LocalDateTime.now();
+    // ----------------- Getters and Setters -----------------
 
-	// ----------------- Getters and Setters -----------------
 
 	public Long getId() {
 		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
 	}
 
 	public String getReferenceId() {
@@ -93,6 +92,7 @@ public class Transaction {
 	public String getToAccount() {
 		return toAccount;
 	}
+	
 
 	public void setToAccount(String toAccount) {
 		this.toAccount = toAccount;
@@ -162,16 +162,24 @@ public class Transaction {
 		this.transactionTime = transactionTime;
 	}
 
+	public String getDescriptioncreditanddebit() {
+		return descriptioncreditanddebit;
+	}
+
+	public void setDescriptioncreditanddebit(String descriptioncreditanddebit) {
+		this.descriptioncreditanddebit = descriptioncreditanddebit;
+	}
+
 	@Override
 	public String toString() {
 		return "Transaction [id=" + id + ", referenceId=" + referenceId + ", account=" + account + ", fromAccount="
 				+ fromAccount + ", toAccount=" + toAccount + ", transactionType=" + transactionType + ", amount="
 				+ amount + ", availableBalance=" + availableBalance + ", channel=" + channel + ", initiatedBy="
-				+ initiatedBy + ", remarks=" + remarks + ", status=" + status + ", transactionTime=" + transactionTime
-				+ "]";
+				+ initiatedBy + ", remarks=" + remarks + ", status=" + status + ", descriptioncreditanddebit="
+				+ descriptioncreditanddebit + ", transactionTime=" + transactionTime + "]";
 	}
-	
-	
-	
-	
+
+    // (rest of your existing getters and setters remain unchanged)
+    
+    
 }

@@ -33,9 +33,9 @@ public class MiniStatementDTO {
 		return "MiniStatementDTO [date=" + date + ", description=" + description + ", debit=" + debit + ", credit="
 				+ credit + ", balance=" + balance + "]";
 	}
-    
-    
-    
-    
-    
+
+
+
+
+
 }

@@ -12,13 +12,13 @@ public class Test  implements CommandLineRunner{
 	@Autowired
 	GeneratorUtil test;
 
-	
+
 @Override
 public void run(String... args) throws Exception {
 
 	String res=test.generateAccountNumber();
 	System.out.println("Account Number:"+res);
-	String customerid=test.generateCustomerId();
-	System.out.println("Customer id:"+customerid);
+//	String customerid=test.generateCustomerId();
+//	System.out.println("Customer id:"+customerid);
 }
 }

@@ -13,8 +13,8 @@ public class MessageConstants {
     public static final String UPDATE_SUCCESS = "Data updated successfully.";
     public static final String DELETE_SUCCESS = "Data deleted successfully.";
 
-    
-    
+
+
     public static final String NAME_CANNOT_BE_EMPTY = "Name cannot be empty";
     public static final String EMAIL_CANNOT_BE_EMPTY = "Email cannot be empty";
     public static final String PHONE_CANNOT_BE_EMPTY = "Phone cannot be empty";
@@ -35,7 +35,7 @@ public class MessageConstants {
     public static  final String MONEY_TRANSFER_SUCCESSFULL="Money TransferSuccessfull..";
     public static  final String WITHDRWAL_TRANSFER_SUCCESSFULL="Money TransferSuccessfull..";
 
-    
+
 
     // ❌ Error Messages
     public static final String ACCOUNT_CREATION_FAILED = "Failed to create account.";

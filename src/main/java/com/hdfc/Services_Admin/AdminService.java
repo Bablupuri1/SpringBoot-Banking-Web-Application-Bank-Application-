@@ -3,6 +3,7 @@ package com.hdfc.Services_Admin;
 
 // Import statements
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -19,6 +20,7 @@ import com.hdfc.DTO.CustomerResponseCredentialDTO;
 import com.hdfc.DTO.DepositRequestDTO;
 import com.hdfc.DTO.DepositResponseDTO;
 import com.hdfc.DTO.MiniStatementDTO;
+import com.hdfc.DTO.TransactionResponseDTO;
 import com.hdfc.DTO.WithdrawRequestDTO;
 import com.hdfc.DTO.WithdrawResponseDTO;
 import com.hdfc.Model.Account;
@@ -133,8 +135,9 @@ public class AdminService implements AccountService {
 
 		// Validate input fields
 		ResponseEntity<ApiResponse<CustomerResponseCredentialDTO>> validationResult = validateCustomerInput(requestDto);
-		if (validationResult != null)
+		if (validationResult != null) {
 			return validationResult;
+		}
 
 		// Create customer entity
 		Customer customer = new Customer();
@@ -146,8 +149,8 @@ public class AdminService implements AccountService {
 		customer.setAddress(requestDto.getAddress());
 
 		// Generate customer ID and default password
-		String customerId = generatorUtil.generateCustomerId();
-		String password = "HDFC@123" + generatorUtil.generateCustomerId(); // Default password
+	    String customerId = generatorUtil.generateUniqueCustomerId(); // unique
+	    String password = generatorUtil.generateUniquePassword();    // unique
 
 		customer.setCustomerId(customerId);
 		customer.setPassword(password);
@@ -156,6 +159,10 @@ public class AdminService implements AccountService {
 		Account account = new Account();
 		account.setAccountType(requestDto.getAccountType());
 		account.setBalance(requestDto.getBalance());
+
+
+		//here first of all get the genrated accouunt number after that
+		//pass to the helper method which is convert
 		account.setAccountNumber(generatorUtil.generateAccountNumber());
 
 		account.setCustomer(customer);
@@ -164,24 +171,10 @@ public class AdminService implements AccountService {
 		// Save customer (cascade saves account too)
 		Customer savedCustomer = customerRepository.save(customer);
 
-		// Save initial transaction using helper method
-
-		// recordTransaction(savedCustomer.getAccount(),
-		// "DEPOSIT",
-		// requestDto.getBalance(),
-		// "Initial account open deposit amount",
-		// "ADMIN");
-
-		
-		
-		//THIS IS ONLY FOR STORE THE TRANSACTION   
-		
 		transactionManagement.recordTransaction(savedCustomer.getAccount(), "DEPOSIT", requestDto.getBalance(),
-				"Initial account open deposit amount", "ADMIN");
-		
-		
-		
-		
+				"Initial account open deposit amount", "ADMIN","ADMIN_DEPOSIT");
+
+		// _________________________________________________________________
 
 		// Prepare response DTO with customer credentials
 		CustomerResponseCredentialDTO responseDto = new CustomerResponseCredentialDTO();
@@ -194,7 +187,52 @@ public class AdminService implements AccountService {
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
-	// Method to deposit money into account
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	// ______________________DEPOSIT HANDLER__________________________
+
 	@Override
 	public ResponseEntity<ApiResponse<DepositResponseDTO>> depositToAccount(DepositRequestDTO request) {
 		System.out.println("AdminService.depositToAccount()");
@@ -222,10 +260,16 @@ public class AdminService implements AccountService {
 			account.setBalance(newBalance);
 			accountrepo.save(account); // Save updated balance
 
+			
+			
+			
+			
+//	___________________________________________________________		
+			
 			// Create transaction record
 			Transaction transaction = new Transaction();
 			transaction.setAccount(account);
-			transaction.setFromAccount("ADMIN101"); // Admin as sender
+			transaction.setFromAccount(   "ADMIN101"        ); // Admin as sender
 			transaction.setToAccount(account.getAccountNumber());
 			transaction.setTransactionType("DEPOSIT");
 			transaction.setAmount(request.getAmount());
@@ -235,9 +279,20 @@ public class AdminService implements AccountService {
 			transaction.setRemarks(request.getRemarks());
 			transaction.setStatus("SUCCESS");
 			transaction.setTransactionTime(LocalDateTime.now());
+			transaction.setDescriptioncreditanddebit("ADMIN_DEPOSIT");
 
+			
 			transactionRepo.save(transaction); // Save transaction
-
+			
+//		________________________________________________________________________	
+			
+			
+			
+			
+			
+			
+			
+			
 			// Prepare deposit response DTO
 			String customerName = account.getCustomer().getName();
 
@@ -258,6 +313,33 @@ public class AdminService implements AccountService {
 		}
 	}
 
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	// _________________WITHDRAWL HANDLER______________________________
+
 	@Override
 	public ResponseEntity<ApiResponse<WithdrawResponseDTO>> withdrawFromAccount(WithdrawRequestDTO request) {
 
@@ -277,45 +359,43 @@ public class AdminService implements AccountService {
 
 		// 3. Check sufficient balance
 		if (account.getBalance() < request.getAmount()) {
+			Transaction txn = transactionManagement.recordTransaction1(account, account.getAccountNumber(),
+					account.getAccountNumber(), "DEBIT", request.getAmount(), account.getBalance(), "ONLINE", "ADMIN",
+					"WIDTHRAWL FAILED DUE TO INSUFFICIENT BALANCE", "FAILED", LocalDateTime.now(),"WITHDRAWAL"
 
-			// 3.1 Maintain Failed Transaction
-			Transaction failedTxn = new Transaction();
-			failedTxn.setAccount(account);
-			failedTxn.setFromAccount(account.getAccountNumber());
-			failedTxn.setToAccount(account.getAccountNumber());
-			failedTxn.setTransactionType("DEBIT");
-			failedTxn.setAmount(request.getAmount());
-			failedTxn.setAvailableBalance(account.getBalance()); // Balance not deducted
-			failedTxn.setChannel("ONLINE");
-			failedTxn.setInitiatedBy(account.getCustomer().getName());
-			failedTxn.setRemarks("Failed withdrawal attempt due to insufficient balance");
-			failedTxn.setStatus("FAILED");
-			failedTxn.setTransactionTime(LocalDateTime.now());
-			transactionRepo.save(failedTxn);
+			);
 
-			return new ResponseEntity<>(new ApiResponse<>(false, "Insufficient balance", null), HttpStatus.BAD_REQUEST);
+			// ___________WITHDRAWL FAILED THEN RETURN THE RESPONSE TO THE
+			// CUSTOMER_____________________
+
+			WithdrawResponseDTO dto = new WithdrawResponseDTO();
+			dto.setAccountNumber(account.getAccountNumber());
+			dto.setWithdrawnAmount(request.getAmount());
+			dto.setAvailableBalance(account.getBalance());
+			dto.setStatus("FAILED");
+			dto.setTransactionRef(txn.getReferenceId());
+
+			return new ResponseEntity<>(new ApiResponse<>(false, "Insufficient balance", dto), HttpStatus.BAD_REQUEST);
 		}
 
 		// 4. Deduct balance
 		account.setBalance(account.getBalance() - request.getAmount());
 		accountrepo.save(account);
 
-		// 5. Create SUCCESS Transaction
-		Transaction txn = new Transaction();
-		txn.setAccount(account);
-		txn.setFromAccount(account.getAccountNumber());
-		txn.setToAccount(account.getAccountNumber());
-		txn.setTransactionType("DEBIT");
-		txn.setAmount(request.getAmount());
-		txn.setAvailableBalance(account.getBalance());
-		txn.setChannel("ONLINE");
-		txn.setInitiatedBy(account.getCustomer().getName());
-		txn.setRemarks("Amount withdrawn by Admin");
-		txn.setStatus("SUCCESS");
-		txn.setTransactionTime(LocalDateTime.now());
-		transactionRepo.save(txn);
 
-		// after transaction we need to set the value for Withdraw Response
+		// __________________________This is clean code and easy to
+		// maintain__________________________________________________________
+
+		Transaction txn = transactionManagement.recordTransaction1(account, account.getAccountNumber(),
+				account.getAccountNumber(), "DEBIT", request.getAmount(), account.getBalance(), "ONLINE", "ADMIN",
+				"WIDTHRAWL SUCCESSFULL", "SUCCESS", LocalDateTime.now(),"WITHDRAWAL"
+
+		);
+
+		// _____________________________________________________________________________________
+
+		// ____________________AFTER WITHDRAWL RETURN THE RESPONSE TO THE
+		// CUSTOMER_____________________
 
 		WithdrawResponseDTO dto = new WithdrawResponseDTO();
 		dto.setAccountNumber(account.getAccountNumber());
@@ -324,144 +404,127 @@ public class AdminService implements AccountService {
 		dto.setStatus("SUCCESS");
 		dto.setTransactionRef(txn.getReferenceId());
 
-		ApiResponse<WithdrawResponseDTO> withdrawresponse = new ApiResponse<WithdrawResponseDTO>(true,
+		ApiResponse<WithdrawResponseDTO> withdrawresponse = new ApiResponse<>(true,
 				MessageConstants.WITHDRWAL_TRANSFER_SUCCESSFULL, dto);
-
-		//
-		// // Wrap in ApiResponse and return
-		// ApiResponse<DepositResponseDTO> response = new ApiResponse<>(true,
-		// MessageConstants.DEPOSITE_AMMOUNT_ADDED_IN_YOURACCOUNT, responseDTO);
-		//
-		// return new ResponseEntity<>(response, HttpStatus.OK);
-		//
-		//
 
 		return new ResponseEntity<>(withdrawresponse, HttpStatus.OK);
 
 	}
 
-	// @Override
-	// public List<TransactionResponseDTO> getTransactionsBetweenDates(Long
-	// accountId, LocalDate startDate,
-	// LocalDate endDate) {
-	// // Fetch transactions from DB
-	//
-	//
-	//
-	// List<TransactionResponseDTO> byAccountIdAndDateBetween = transactionRepo
-	// .findByAccountIdAndDateBetween(accountId, startDate, endDate);
-	//
-	// // Agar koi transaction hi nahi mila to list empty hogi
-	// return byAccountIdAndDateBetween;
-	// }
-	//
-//
-//	@Override
-//	public List<TransactionResponseDTO> getTransactionsBetweenDates(Long accountId, LocalDate startDate,
-//			LocalDate endDate) {
-//
-//		// Convert LocalDate to LocalDateTime for full-day range
-//
-//		List<Transaction> transactions = transactionRepo.findByAccount_IdAndTransactionTimeBetween(accountId, startDate,
-//				endDate);
-//
-//		List<TransactionResponseDTO> transactionresponse =
-//
-//				transactions.stream().map(tx -> {
-//					TransactionResponseDTO dto = new TransactionResponseDTO();
-//					dto.setTransactionId(tx.getId());
-//					dto.setAccountId(tx.getAccount().getId());
-//					dto.setAmount(tx.getAmount());
-//					dto.setAvailableBalance(tx.getAvailableBalance());
-//					dto.setChannel(tx.getChannel());
-//					dto.setFromAccount(tx.getFromAccount());
-//					dto.setToAccount(tx.getToAccount());
-//					dto.setInitiatedBy(tx.getInitiatedBy());
-//					dto.setRemarks(tx.getRemarks());
-//					dto.setStatus(tx.getStatus());
-//					dto.setTransactionTime(tx.getTransactionTime().toLocalDate());
-//					dto.setTransactionType(tx.getTransactionType());
-//					return dto;
-//				}).collect(Collectors.toList());
-//
-//		return transactionresponse;
-//	}
-	
-	
-//	
-//	@Override
-//	public List<MiniStatementDTO> getTransactionsByAccountAndDateRange(String accountNumber,
-//			LocalDateTime startDate, LocalDateTime endDate) {
-//		
-//		System.out.println("AdminService.getTransactionsByAccountAndDateRange()");
-//		
-//		List<Transaction> list = transactionRepo.findTransactionsByAccountAndDateRange(accountNumber, startDate, endDate);
-//		
-//		
-//		System.out.println("Tranactin details for account:"+list);
-//		
-//		//now we need to give the data to MiniStatementDTO as response 
-//		
-//		
-//		list.stream().map(trans->{
-//            MiniStatementDTO dto = new MiniStatementDTO();
-//
-//			
-//		});
-//		
-//		
-//		return null;
-//	}
+
+
+
 	
 	
 	
 	
+	
+	
+	
+	
+	
+	
+	
+	//isko dekhan h bahi pahle ka view se thik tha ye
+
 	@Override
-	public List<MiniStatementDTO> getTransactionsByAccountAndDateRange(
-	        String accountNumber,
-	        LocalDateTime startDate,
-	        LocalDateTime endDate) {
+	public List<MiniStatementDTO> getTransactionsByAccountAndDateRange(String accountNumber, LocalDateTime startDate,
+			LocalDateTime endDate) {
 
-	    System.out.println("AdminService.getTransactionsByAccountAndDateRange()");
+		System.out.println("AdminService.getTransactionsByAccountAndDateRange()");
 
-	    List<Transaction> list = transactionRepo.findTransactionsByAccountAndDateRange(accountNumber, startDate, endDate);
+		List<Transaction> list = transactionRepo.findTransactionsByAccountAndDateRange(accountNumber, startDate,
+				endDate);
 
-	    System.out.println("Transaction details for account:" + list);
+		System.out.println("Transaction details for account:" + list);
 
-	    // Step 1: Convert Transaction -> MiniStatementDTO and collect into list
-	    List<MiniStatementDTO> miniStatementList = list.stream().map(trans -> {
-	        MiniStatementDTO dto = new MiniStatementDTO();
+		// Step 1: Convert Transaction -> MiniStatementDTO and collect into list
+		List<MiniStatementDTO> miniStatementList = list.stream().map(trans -> {
+			MiniStatementDTO dto = new MiniStatementDTO();
 
-	        // Date (LocalDate)
-	        dto.setDate(trans.getTransactionTime().toLocalDate());
+			// Date (LocalDate)
+			dto.setDate(trans.getTransactionTime().toLocalDate());
 
-	        // Description
-	        dto.setDescription(trans.getRemarks());
+			// Description
+			dto.setDescription(trans.getRemarks());
 
-	        // Debit / Credit logic
-	        if ("DEBIT".equalsIgnoreCase(trans.getTransactionType())) {
-	            dto.setDebit(trans.getAmount());
-	            dto.setCredit(null);
-	        } else {
-	            dto.setCredit(trans.getAmount());
-	            dto.setDebit(null);
-	        }
+			// Debit / Credit logic
+			if ("DEBIT".equalsIgnoreCase(trans.getTransactionType())) {
+				dto.setDebit(trans.getAmount());
+				dto.setCredit(null);
+			} else {
+				dto.setCredit(trans.getAmount());
+				dto.setDebit(null);
+			}
 
-	        // Balance
-	        dto.setBalance(trans.getAvailableBalance());
+			// Balance
+			dto.setBalance(trans.getAvailableBalance());
 
-	        return dto;
-	    }).collect(Collectors.toList());
+			return dto;
+		}).collect(Collectors.toList());
 
-	    // Step 2: Debug print if needed
-	    System.out.println("Mini Statement DTO List: " + miniStatementList);
+		// Step 2: Debug print if needed
+		System.out.println("Mini Statement DTO List: " + miniStatementList);
 
-	    // Step 3: Return final list
-	    return miniStatementList;
-	    
+		// Step 3: Return final list
+		return miniStatementList;
+
 	}
 
-	
-	
+
+	@Override
+	public List<TransactionResponseDTO> getTransactionsByMonthRange(String accountNumber, String month1,
+			String month2) {
+
+		YearMonth startYm = YearMonth.parse(month1);
+		YearMonth endYm = YearMonth.parse(month2);
+
+		LocalDateTime startDate = startYm.atDay(1).atStartOfDay();
+		LocalDateTime endDate = endYm.atEndOfMonth().atTime(23, 59, 59);
+
+		// Step 1: Fetch all transactions
+		List<Transaction> transactions = transactionRepo.findTransactionsByAccountAndDateRange(accountNumber, startDate,
+				endDate);
+
+		// Step 2: Convert to DTO and store in a list
+		List<TransactionResponseDTO> dtoList = transactions.stream().map(tx -> {
+			TransactionResponseDTO dto = new TransactionResponseDTO();
+			dto.setDate(tx.getTransactionTime());
+			dto.setReferenceNo(tx.getReferenceId());
+
+			if ("FAILED".equalsIgnoreCase(tx.getStatus())) {
+				dto.setDescription("FAILED - " + tx.getTransactionType());
+				dto.setDebit(0.0);
+				dto.setCredit(0.0);
+			} else {
+				dto.setDescription(tx.getTransactionType());
+
+				if (tx.getTransactionType().equalsIgnoreCase("DEPOSIT")
+						|| tx.getTransactionType().equalsIgnoreCase("CREDIT")
+						|| tx.getTransactionType().equalsIgnoreCase("TRANSFER_RECEIVED")) {
+
+					dto.setCredit(tx.getAmount());
+					dto.setDebit(null);
+
+				} else if (tx.getTransactionType().equalsIgnoreCase("DEBIT")
+						|| tx.getTransactionType().equalsIgnoreCase("WITHDRAWAL")
+						|| tx.getTransactionType().equalsIgnoreCase("TRANSFER_SENT")) {
+
+					dto.setDebit(tx.getAmount());
+					dto.setCredit(null);
+
+				} else {
+					dto.setDebit(null);
+					dto.setCredit(null);
+				}
+			}
+
+			dto.setBalance(tx.getAvailableBalance());
+			return dto;
+		}).toList();
+
+		// Step 3: Return final list
+		return dtoList;
+	}
 
 }

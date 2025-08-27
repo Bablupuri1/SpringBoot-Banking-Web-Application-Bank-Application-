@@ -1,13 +1,11 @@
 package com.hdfc.DTO;
 // TransferRequestDTO.java
-public class TransferRequestDTO 
+public class TransferRequestDTO
 {
     private String fromAccount;
     private String toAccount;
     private double amounts;
     private String remarks; // optional
-    
-    
 	public String getFromAccount() {
 		return fromAccount;
 	}
@@ -20,11 +18,11 @@ public class TransferRequestDTO
 	public void setToAccount(String toAccount) {
 		this.toAccount = toAccount;
 	}
-	public double getAmount() {
+	public double getAmounts() {
 		return amounts;
 	}
-	public void setAmount(double amount) {
-		this.amounts = amount;
+	public void setAmounts(double amounts) {
+		this.amounts = amounts;
 	}
 	public String getRemarks() {
 		return remarks;
@@ -32,7 +30,15 @@ public class TransferRequestDTO
 	public void setRemarks(String remarks) {
 		this.remarks = remarks;
 	}
-    
-    
-    
+	@Override
+	public String toString() {
+		return "TransferRequestDTO [fromAccount=" + fromAccount + ", toAccount=" + toAccount + ", amounts=" + amounts
+				+ ", remarks=" + remarks + "]";
+	}
+
+
+	
+
+
+
 }

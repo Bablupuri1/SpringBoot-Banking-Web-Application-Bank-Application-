@@ -22,8 +22,8 @@ public class DepositRequestDTO {
 	public void setRemarks(String remarks) {
 		this.remarks = remarks;
 	}
-	
-	
 
-	
+
+
+
 }

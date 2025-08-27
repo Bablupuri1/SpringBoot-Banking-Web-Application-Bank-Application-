@@ -5,9 +5,9 @@ public class WithdrawResponseDTO {
     private double availableBalance;
     private String status;
     private String transactionRef;
-    
-    
-    
+
+
+
 	public String getAccountNumber() {
 		return accountNumber;
 	}
@@ -38,8 +38,8 @@ public class WithdrawResponseDTO {
 	public void setTransactionRef(String transactionRef) {
 		this.transactionRef = transactionRef;
 	}
-    
-    
-    
-    
+
+
+
+
 }

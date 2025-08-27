@@ -5,6 +5,7 @@ import java.util.List;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -27,17 +28,17 @@ public class Account {
     private LocalDate createdAt = LocalDate.now();
     private String accountNumber;
 
-    
+
 //    Repository
-    
-    
-    @OneToOne(cascade = CascadeType.ALL)
+
+
+    @OneToOne(cascade = CascadeType.ALL,fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id")
     private Customer customer;
-    
+
 
     //  Add this for bidirectional relationship with transactions
-    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL,fetch = FetchType.LAZY)
     private List<Transaction> transactions;
 
     // ---------------- Getters and Setters ----------------
@@ -105,8 +106,8 @@ public class Account {
     public void setTransactions(List<Transaction> transactions) {
         this.transactions = transactions;
     }
-    
-    
-    
-    
+
+
+
+
 }

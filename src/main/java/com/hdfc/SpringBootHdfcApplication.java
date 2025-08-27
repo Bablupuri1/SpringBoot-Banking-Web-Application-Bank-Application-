@@ -6,16 +6,14 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class SpringBootHdfcApplication {
 
-	public static void main(String[] args) 
-	{
-		
-		
-	    SpringApplication.run(SpringBootHdfcApplication.class, args);
-	
+	public static void main(String[] args) {
+
+		SpringApplication.run(SpringBootHdfcApplication.class, args);
 		System.out.println("SpringBootHdfcApplication.main()");
 		
-
-
+		
+		
+		
 
 	}
 

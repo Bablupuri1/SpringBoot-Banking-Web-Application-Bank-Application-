@@ -16,8 +16,8 @@ public class CustomerAccountDTO {
     // Account-related fields
     private String accountType;
     private double balance;
-    
-    
+
+
 	public String getName() {
 		return name;
 	}

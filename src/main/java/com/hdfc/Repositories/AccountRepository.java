@@ -11,6 +11,6 @@ import com.hdfc.Model.Account;
 public interface AccountRepository  extends JpaRepository<Account,Long>{
 
 	Optional<Account> findByAccountNumber(String AcNumber);
-	
+
 
 }
