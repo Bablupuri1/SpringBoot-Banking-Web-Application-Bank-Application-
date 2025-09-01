@@ -4,7 +4,6 @@ package com.hdfc.Services_Admin;
 // Import statements
 import java.time.LocalDateTime;
 import java.time.YearMonth;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -13,14 +12,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-import com.hdfc.AdminDTO.PagedResponse;
-import com.hdfc.AdminDTO.TransactionDto;
 import com.hdfc.ApiResponse.ApiResponse;
 import com.hdfc.DTO.CustomerAccountDTO;
 import com.hdfc.DTO.CustomerResponseCredentialDTO;
@@ -43,7 +39,7 @@ import com.hdfc.constants.MessageConstants;
 // Marking the class as a Spring service
 
 @Service
-public class AdminService implements AdminAccount_common_Services {
+public class AdminService1 implements AdminAccount_common_Services1 {
 
 	// Injecting dependencies using Springs @Autowired annotation
 	@Autowired
@@ -444,92 +440,6 @@ public class AdminService implements AdminAccount_common_Services {
 		Pageable pageable = PageRequest.of(page, size);
 
 		return accountrepo.findAll(pageable);
-	}
-
-	// get all the customer with pagination concept
-
-	@Override
-	public Page<Customer> getAllCustomers(int page, int size) {
-		// TODO Auto-generated method stub
-
-		Pageable pageable = PageRequest.of(page, size);
-		return customerRepository.findAll(pageable);
-	}
-
-	// _________get all the transaction with pagination concept_______
-
-	@Override
-	public PagedResponse<Transaction> getTransactions(int page, int size, String status, String type, String accountId,
-			LocalDateTime fromDate, LocalDateTime toDate) {
-		Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
-
-		// yaha pe filtering ke liye aap `Specification` ya `custom query` use karenge
-		Page<Transaction> transactionPage = transactionRepo.findAll(pageable);
-
-		List<Transaction> transactions = transactionPage.getContent();
-
-		return new PagedResponse<>(transactions, transactionPage.getNumber(), transactionPage.getSize(),
-				transactionPage.getTotalElements(), transactionPage.getTotalPages(), transactionPage.isLast());
-
-	}
-
-	// now we are getting recent transaction and this method is invoked by controller
-	  @Override
-	    public List<TransactionDto> fetchRecentTransactions() {
-	        System.out.println("AdminService.fetchRecentTransactions()");
-
-	        List<Transaction> transactions = transactionRepo.fetchRecentTransactions();
-
-	        if (transactions.isEmpty()) {
-	            return Collections.emptyList();
-	        }
-
-	        return transactions.stream()
-	                .limit(10) // Optional: enforce top 10 here if not done in query
-	                .map(this::convertToDto)
-	                .collect(Collectors.toList());
-	    }
-
-	    private TransactionDto convertToDto(Transaction txn) {
-	        TransactionDto dto = new TransactionDto();
-	        dto.setId(txn.getId());
-	        dto.setReferenceId(txn.getReferenceId());
-	        dto.setFromAccount(txn.getFromAccount());
-	        dto.setToAccount(txn.getToAccount());
-	        dto.setTransactionType(txn.getTransactionType());
-	        dto.setAmount(txn.getAmount());
-	        dto.setAvailableBalance(txn.getAvailableBalance());
-	        dto.setChannel(txn.getChannel());
-	        dto.setInitiatedBy(txn.getInitiatedBy());
-	        dto.setRemarks(txn.getRemarks());
-	        dto.setStatus(txn.getStatus());
-	        dto.setDescriptioncreditanddebit(txn.getDescriptioncreditanddebit());
-	        dto.setTransactionTime(txn.getTransactionTime());
-	        return dto;
-	    }
-	
-
-
-	@Override
-	public long countAccounts() {
-		// TODO Auto-generated method stub
-		long count = accountrepo.count();
-		return count;
-	}
-
-	@Override
-	public long countCustomers() {
-		// TODO Auto-generated method stub
-		long count = customerRepository.count();
-
-		return count;
-	}
-
-	@Override
-	public long countTransactions() {
-		// TODO Auto-generated method stub
-		long count = transactionRepo.count();
-		return count;
 	}
 
 }

@@ -3,6 +3,7 @@ package com.hdfc.Repositories;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -98,6 +99,25 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 		       "WHERE t.fromAccount = :accountNumber OR t.toAccount = :accountNumber " +
 		       "ORDER BY t.transactionTime DESC")
 		List<Transaction> findTransactionsByAccountNumber(@Param("accountNumber") String accountNumber);
+	
+	
+//	______________________________________________________________________________
+	
+	
+	 List<Transaction> findByAccountId(Long accountId);
+	 
+	 
+	 
+	 
+	 
+	 
+	 
+	 ///this is useful for get the latesg 0 transaction
+	
+	
+
+	    @Query("SELECT t FROM Transaction t WHERE t.transactionTime IS NOT NULL ORDER BY t.transactionTime DESC")
+	    List<Transaction> fetchRecentTransactions();
 
 	
 

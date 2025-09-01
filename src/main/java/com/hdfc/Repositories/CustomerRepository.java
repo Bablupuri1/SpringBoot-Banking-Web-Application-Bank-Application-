@@ -27,4 +27,7 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
 
     //  If you also want full Customer details on successful login
     Optional<Customer> findByCustomerIdAndPassword(String customerId, String password);
+    
+    
+
 }

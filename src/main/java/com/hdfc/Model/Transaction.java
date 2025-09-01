@@ -4,6 +4,8 @@ package com.hdfc.Model;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -28,6 +30,7 @@ public class Transaction {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id", nullable = false)
+    @JsonIgnore
     private Account account;
 
     private String fromAccount;
@@ -170,14 +173,14 @@ public class Transaction {
 		this.descriptioncreditanddebit = descriptioncreditanddebit;
 	}
 
-	@Override
-	public String toString() {
-		return "Transaction [id=" + id + ", referenceId=" + referenceId + ", account=" + account + ", fromAccount="
-				+ fromAccount + ", toAccount=" + toAccount + ", transactionType=" + transactionType + ", amount="
-				+ amount + ", availableBalance=" + availableBalance + ", channel=" + channel + ", initiatedBy="
-				+ initiatedBy + ", remarks=" + remarks + ", status=" + status + ", descriptioncreditanddebit="
-				+ descriptioncreditanddebit + ", transactionTime=" + transactionTime + "]";
-	}
+//	@Override
+//	public String toString() {
+//		return "Transaction [id=" + id + ", referenceId=" + referenceId + ", account=" + account + ", fromAccount="
+//				+ fromAccount + ", toAccount=" + toAccount + ", transactionType=" + transactionType + ", amount="
+//				+ amount + ", availableBalance=" + availableBalance + ", channel=" + channel + ", initiatedBy="
+//				+ initiatedBy + ", remarks=" + remarks + ", status=" + status + ", descriptioncreditanddebit="
+//				+ descriptioncreditanddebit + ", transactionTime=" + transactionTime + "]";
+//	}
 
     // (rest of your existing getters and setters remain unchanged)
     
