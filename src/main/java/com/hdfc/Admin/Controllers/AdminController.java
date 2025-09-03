@@ -43,32 +43,30 @@ import com.hdfc.Services_Admin.AdminService;
 
 @RestController
 @RequestMapping("/api/admin")
-@CrossOrigin(origins = "http://localhost:5174") // सिर्फ React के लिए allow
+@CrossOrigin(origins = "http://localhost:5174") // THIS CODE IS  GIVE  THE PERMISSION TO ACCESS  ALL CONTROLLER END POINT THOUGH THIS DOMAIN BECOUSE SPRING BOOT BY DEFAULT PREVENT ALL DOMAIN
 public class AdminController {
 
-	// private AdminService1 adminService;
 
-	// this is testing jab maine count kiya tha account,etc
 
 	@Autowired
-	private AdminService adminService;
+	private AdminService adminService;  //THIS IS ADMIN SERVICES WHERE I  IMPLEMENTED SO MANY   BUSINESS METHOD 
 
+	// _________________________________________________________________________________________________
+	
 	@PostMapping("/create-account")
 	public ResponseEntity<ApiResponse<CustomerResponseCredentialDTO>> createAccount(
 			@RequestBody CustomerAccountDTO requestDto) {
 		return adminService.createAccount(requestDto);
 	}
-
-	
-	
-	
-	
+// _________________________________________________________________________________________________
 	
 	@PostMapping("/deposit")
 	public ResponseEntity<ApiResponse<DepositResponseDTO>> deposit(@RequestBody DepositRequestDTO request) {
 		System.out.println("AdminController.deposit()");
 		return adminService.depositToAccount(request);
 	}
+	
+	// _________________________________________________________________________________________________
 
 	@PostMapping("/withdraw")
 	public ResponseEntity<ApiResponse<WithdrawResponseDTO>> withdrawFromAccount(WithdrawRequestDTO request) {
@@ -78,17 +76,7 @@ public class AdminController {
 
 		return withdrawFromAccount;
 	}
-
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+// _________________________________________________________________________________________________
 	
 	@GetMapping("/getTransactionAccountByRange")
 	public List<MiniStatementDTO> getTransactionsByAccountAndDateRange(String accountNumber, String startDate,
@@ -115,8 +103,10 @@ public class AdminController {
 		return null;
 	}
 
-	// this is usefule for get the transaction between two date and moth year not
-	// time
+	// _______________________________________________________________________
+	
+	// this is usefule for get the transaction between two date and motnh year not
+	// time  just give the year and month
 
 	// here no need to specify the name of @RequestParam("accno") becouse incomming
 	// url varibale name and method varibale name same h yha pe
@@ -175,7 +165,9 @@ public class AdminController {
 
 		return response;
 	}
+// _____________________________________________________________________________
 
+	
 	// create api for get all the customers with pagination concept
 
 	@GetMapping("/getAllCustomers")
@@ -216,12 +208,8 @@ public class AdminController {
 
 		return response;
 	}
-
 	
-	
-	
-	
-	
+// ________________________________________________________________________________________________________
 	
 	
 	
@@ -235,15 +223,8 @@ public class AdminController {
 		return ResponseEntity.ok(adminService.getTransactions(page, size, status, type, accountId, fromDate, toDate));
 	}
 
-	
-	
-	
-	
-	
-	
-	
-	
-	
+// ______________________________________________________________________________________________________________________________
+
 	
 	// we are going to developed recent transaction
 	@GetMapping("/RecentTransaction")
@@ -253,35 +234,8 @@ public class AdminController {
 		return ResponseEntity.ok(transactions);
 	}
 
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	// create api for get the ano of account
+// ___________________________________________________________________________________________
+	// create api for  get the no of account
 
 	@GetMapping("/getnoofAccounts")
 	public ResponseEntity<?> getnoofAccounts() {
@@ -290,7 +244,8 @@ public class AdminController {
 		return new ResponseEntity<Long>(countAccounts, HttpStatus.OK);
 
 	}
-
+// ___________________________________________________________________________________________________
+	
 	// api for get no of customers
 
 	@GetMapping("/getnoofCustomers")
@@ -300,6 +255,8 @@ public class AdminController {
 		return new ResponseEntity<Long>(countCustomers, HttpStatus.OK);
 
 	}
+	
+// ________________________________________________________________________________________________________________
 
 	@GetMapping("/getnoofTransactions")
 	public ResponseEntity<?> getnoofTransactions() {
