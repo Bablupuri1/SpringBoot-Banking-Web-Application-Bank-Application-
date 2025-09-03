@@ -10,10 +10,6 @@ public class SpringBootHdfcApplication {
 
 		SpringApplication.run(SpringBootHdfcApplication.class, args);
 		System.out.println("SpringBootHdfcApplication.main()");
-		
-		
-		
-		
 
 	}
 

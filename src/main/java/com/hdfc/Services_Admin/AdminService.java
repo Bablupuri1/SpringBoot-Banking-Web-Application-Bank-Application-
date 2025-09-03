@@ -17,10 +17,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
 import com.hdfc.AdminDTO.PagedResponse;
 import com.hdfc.AdminDTO.TransactionDto;
+import com.hdfc.Admin_Email_Services.EmailService;
 import com.hdfc.ApiResponse.ApiResponse;
 import com.hdfc.DTO.CustomerAccountDTO;
 import com.hdfc.DTO.CustomerResponseCredentialDTO;
@@ -60,6 +60,9 @@ public class AdminService implements AdminAccount_common_Services {
 
 	@Autowired
 	TransactionManagement transactionManagement;
+
+	@Autowired
+	EmailService emailservice;
 
 	// Method to validate customer inputs
 
@@ -121,14 +124,12 @@ public class AdminService implements AdminAccount_common_Services {
 		return null;
 	}
 
-	// Method to create new customer account
-	@ResponseStatus(HttpStatus.NOT_FOUND)
 	@Override
 	public ResponseEntity<ApiResponse<CustomerResponseCredentialDTO>> createAccount(CustomerAccountDTO requestDto) {
 
 		// Check if email already exists
 		if (customerRepository.existsByEmail(requestDto.getEmail())) {
-			ApiResponse<CustomerResponseCredentialDTO> response = new ApiResponse<>(false, // ❌ yaha success = false
+			ApiResponse<CustomerResponseCredentialDTO> response = new ApiResponse<>(false,
 					MessageConstants.EMAIL_ALREADY_EXISTS, null);
 			return new ResponseEntity<>(response, HttpStatus.CONFLICT);
 		}
@@ -138,8 +139,12 @@ public class AdminService implements AdminAccount_common_Services {
 			ApiResponse<CustomerResponseCredentialDTO> response = new ApiResponse<>(false,
 					MessageConstants.PHONE_ALREADY_EXISTS, null);
 			return new ResponseEntity<>(response, HttpStatus.CONFLICT);
+			
+			
 		}
 
+		
+		
 		// Validate input fields
 		ResponseEntity<ApiResponse<CustomerResponseCredentialDTO>> validationResult = validateCustomerInput(requestDto);
 		if (validationResult != null) {
@@ -155,41 +160,54 @@ public class AdminService implements AdminAccount_common_Services {
 		customer.setDob(requestDto.getDob());
 		customer.setAddress(requestDto.getAddress());
 
-		// Generate customer ID and default password
-		String customerId = generatorUtil.generateUniqueCustomerId(); // unique
-		String password = generatorUtil.generateUniquePassword(); // unique
+		// Generate customer ID and password
+		String customerId = generatorUtil.generateUniqueCustomerId();
+		String password = generatorUtil.generateUniquePassword();
 
 		customer.setCustomerId(customerId);
-		customer.setPassword(password);
+		customer.setPassword(password); // internally stored (not returned in response)
 
-		// Create and map account to customer
+		// Create account entity
 		Account account = new Account();
 		account.setAccountType(requestDto.getAccountType());
 		account.setBalance(requestDto.getBalance());
-
-		// here first of all get the genrated accouunt number after that
-		// pass to the helper method which is convert
 		account.setAccountNumber(generatorUtil.generateAccountNumber());
 
 		account.setCustomer(customer);
 		customer.setAccount(account);
 
-		// Save customer (cascade saves account too)
+		// Save customer + account
 		Customer savedCustomer = customerRepository.save(customer);
 
+		// Record initial deposit transaction
 		transactionManagement.recordTransaction(savedCustomer.getAccount(), "DEPOSIT", requestDto.getBalance(),
 				"Initial account open deposit amount", "ADMIN", "ADMIN_DEPOSIT");
 
-		// _________________________________________________________________
+		// first of send email ok
+		// 4. Send Email with credentials
+		try {
 
-		// Prepare response DTO with customer credentials
-		CustomerResponseCredentialDTO responseDto = new CustomerResponseCredentialDTO();
-		responseDto.setCustomerId(savedCustomer.getCustomerId());
-		responseDto.setPassword(savedCustomer.getPassword());
+			emailservice.sendUserCredentials(savedCustomer.getEmail(), savedCustomer.getName(),
+					savedCustomer.getCustomerId(), savedCustomer.getAccount().getAccountNumber(), password,
+					requestDto.getBalance(), savedCustomer.getAccount().getBalance(), false);
+
+		} catch (Exception e) {
+			e.printStackTrace(); // Email failed, but account is already created
+
+			ApiResponse<CustomerResponseCredentialDTO> response = new ApiResponse<>(false,
+					"Due To Email Server Problem Email you can send but account is opened successfully...", null);
+			return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+
+		}
+
+		// Prepare response DTO
+		CustomerResponseCredentialDTO responseDto = new CustomerResponseCredentialDTO(savedCustomer.getCustomerId(),
+				savedCustomer.getAccount().getAccountNumber());
 
 		// Send success response
 		ApiResponse<CustomerResponseCredentialDTO> response = new ApiResponse<>(true,
 				MessageConstants.ACCOUNT_CREATED_SUCCESS, responseDto);
+
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
 
@@ -221,6 +239,7 @@ public class AdminService implements AdminAccount_common_Services {
 			double newBalance = account.getBalance() + request.getAmount();
 			account.setBalance(newBalance);
 			accountrepo.save(account); // Save updated balance
+			
 
 			// ___________________________________________________________
 
@@ -241,8 +260,40 @@ public class AdminService implements AdminAccount_common_Services {
 
 			transactionRepo.save(transaction); // Save transaction
 
+			
+			
+			
+			
+			//first of all send email to the customers for security purpose 
+			//so user can easily get the iformation about bank lates bank  balance 
 			// ________________________________________________________________________
 
+			
+			try {
+				String name=account.getCustomer().getName();
+				String email = account.getCustomer().getEmail();
+				String customerId = account.getCustomer().getCustomerId();
+				String accountNumber = account.getAccountNumber();
+				
+
+				emailservice.sendUserCredentials(email, name,
+						customerId, accountNumber,request.getAmount(),account.getBalance());
+				
+			} catch (Exception e) {
+				e.printStackTrace(); // Email failed, but account is already created
+
+				ApiResponse<DepositResponseDTO> response = new ApiResponse<>(false,
+						"Money Deposited successfully...", null);
+				return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+
+			}
+			
+			
+			
+			
+			
+			
+			
 			// Prepare deposit response DTO
 			String customerName = account.getCustomer().getName();
 
@@ -262,6 +313,18 @@ public class AdminService implements AdminAccount_common_Services {
 			return new ResponseEntity<>(response1, HttpStatus.NOT_FOUND);
 		}
 	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 
 	// _________________WITHDRAWL HANDLER______________________________
 
@@ -473,42 +536,39 @@ public class AdminService implements AdminAccount_common_Services {
 
 	}
 
-	// now we are getting recent transaction and this method is invoked by controller
-	  @Override
-	    public List<TransactionDto> fetchRecentTransactions() {
-	        System.out.println("AdminService.fetchRecentTransactions()");
+	// now we are getting recent transaction and this method is invoked by
+	// controller
+	@Override
+	public List<TransactionDto> fetchRecentTransactions() {
+		System.out.println("AdminService.fetchRecentTransactions()");
 
-	        List<Transaction> transactions = transactionRepo.fetchRecentTransactions();
+		List<Transaction> transactions = transactionRepo.fetchRecentTransactions();
 
-	        if (transactions.isEmpty()) {
-	            return Collections.emptyList();
-	        }
+		if (transactions.isEmpty()) {
+			return Collections.emptyList();
+		}
 
-	        return transactions.stream()
-	                .limit(10) // Optional: enforce top 10 here if not done in query
-	                .map(this::convertToDto)
-	                .collect(Collectors.toList());
-	    }
+		return transactions.stream().limit(10) // Optional: enforce top 10 here if not done in query
+				.map(this::convertToDto).collect(Collectors.toList());
+	}
 
-	    private TransactionDto convertToDto(Transaction txn) {
-	        TransactionDto dto = new TransactionDto();
-	        dto.setId(txn.getId());
-	        dto.setReferenceId(txn.getReferenceId());
-	        dto.setFromAccount(txn.getFromAccount());
-	        dto.setToAccount(txn.getToAccount());
-	        dto.setTransactionType(txn.getTransactionType());
-	        dto.setAmount(txn.getAmount());
-	        dto.setAvailableBalance(txn.getAvailableBalance());
-	        dto.setChannel(txn.getChannel());
-	        dto.setInitiatedBy(txn.getInitiatedBy());
-	        dto.setRemarks(txn.getRemarks());
-	        dto.setStatus(txn.getStatus());
-	        dto.setDescriptioncreditanddebit(txn.getDescriptioncreditanddebit());
-	        dto.setTransactionTime(txn.getTransactionTime());
-	        return dto;
-	    }
-	
-
+	private TransactionDto convertToDto(Transaction txn) {
+		TransactionDto dto = new TransactionDto();
+		dto.setId(txn.getId());
+		dto.setReferenceId(txn.getReferenceId());
+		dto.setFromAccount(txn.getFromAccount());
+		dto.setToAccount(txn.getToAccount());
+		dto.setTransactionType(txn.getTransactionType());
+		dto.setAmount(txn.getAmount());
+		dto.setAvailableBalance(txn.getAvailableBalance());
+		dto.setChannel(txn.getChannel());
+		dto.setInitiatedBy(txn.getInitiatedBy());
+		dto.setRemarks(txn.getRemarks());
+		dto.setStatus(txn.getStatus());
+		dto.setDescriptioncreditanddebit(txn.getDescriptioncreditanddebit());
+		dto.setTransactionTime(txn.getTransactionTime());
+		return dto;
+	}
 
 	@Override
 	public long countAccounts() {

@@ -43,7 +43,7 @@ import com.hdfc.Services_Admin.AdminService;
 
 @RestController
 @RequestMapping("/api/admin")
-@CrossOrigin(origins = "http://localhost:5174") // 👈 सिर्फ React के लिए allow
+@CrossOrigin(origins = "http://localhost:5174") // सिर्फ React के लिए allow
 public class AdminController {
 
 	// private AdminService1 adminService;
@@ -59,6 +59,11 @@ public class AdminController {
 		return adminService.createAccount(requestDto);
 	}
 
+	
+	
+	
+	
+	
 	@PostMapping("/deposit")
 	public ResponseEntity<ApiResponse<DepositResponseDTO>> deposit(@RequestBody DepositRequestDTO request) {
 		System.out.println("AdminController.deposit()");
@@ -74,7 +79,18 @@ public class AdminController {
 		return withdrawFromAccount;
 	}
 
-	@GetMapping("/gettransaction")
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	@GetMapping("/getTransactionAccountByRange")
 	public List<MiniStatementDTO> getTransactionsByAccountAndDateRange(String accountNumber, String startDate,
 			String endDate) {
 
@@ -201,6 +217,14 @@ public class AdminController {
 		return response;
 	}
 
+	
+	
+	
+	
+	
+	
+	
+	
 	// get all the transaction
 	@GetMapping("/getAllTransactions")
 	public ResponseEntity<PagedResponse<Transaction>> getTransactions(@RequestParam(defaultValue = "0") int page,
@@ -211,14 +235,52 @@ public class AdminController {
 		return ResponseEntity.ok(adminService.getTransactions(page, size, status, type, accountId, fromDate, toDate));
 	}
 
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	// we are going to developed recent transaction
-	@GetMapping("/getRecenttransactions")
+	@GetMapping("/RecentTransaction")
 	public ResponseEntity<List<TransactionDto>> getRecentTransactions() {
 		System.out.println("AdminController.getRecentTransactions()");
 		List<TransactionDto> transactions = adminService.fetchRecentTransactions();
 		return ResponseEntity.ok(transactions);
 	}
 
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	// create api for get the ano of account
 
 	@GetMapping("/getnoofAccounts")

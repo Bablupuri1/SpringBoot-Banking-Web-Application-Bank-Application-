@@ -38,7 +38,9 @@ public class CustomerServiceImpl implements Customer_Common_Services {
 
 	@Autowired
 	private TransactionRepository transactionRepo;
+	
 
+	
 	// ------------------------------------------------------------------------------------------------------------
 	// TRANSFER MONEY
 	// ------------------------------------------------------------------------------------------------------------
@@ -110,6 +112,23 @@ public class CustomerServiceImpl implements Customer_Common_Services {
 				responseDTO);
 
 		return new ResponseEntity<>(response, HttpStatus.OK);
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
 	}
 
 	// ------------------------------------------------------------------------------------------------------------
@@ -133,6 +152,9 @@ public class CustomerServiceImpl implements Customer_Common_Services {
 
 		return new ResponseEntity<>(successResponse, HttpStatus.OK);
 	}
+	
+	
+	
 
 	// ------------------------------------------------------------------------------------------------------------
 	// TRANSACTIONS BY MONTH RANGE (HTML type="month")
@@ -183,6 +205,12 @@ public class CustomerServiceImpl implements Customer_Common_Services {
 	//
 	// return dtoList;
 	// }
+	
+	
+	
+	
+	
+	
 
 	@Override
 	public List<TransactionResponseDTO> getTransactionsByMonthRange(String accountNumber, String month1,
@@ -248,6 +276,9 @@ public class CustomerServiceImpl implements Customer_Common_Services {
 			return "****";
 		return "****" + account.substring(account.length() - 4);
 	}
+	
+	
+	
 
 	// ------------------------------------------------------------------------------------------------------------
 	// TRANSACTIONS BY DATE RANGE (HTML type="datetime-local")
