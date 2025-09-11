@@ -3,11 +3,16 @@ package com.hdfc.DTO;
 public class TransferResponseDTO {
 	private String fromAccount;
 	private String toAccount;
-	private double Transferamount;
+	private double TransferAmount;
 	private double senderAvailableBalance; // renamed
 	private String message;
 	private String referenceId;
 	private String status;
+	private String InitiatedBy;
+	
+	
+	
+	
 	public String getFromAccount() {
 		return fromAccount;
 	}
@@ -21,10 +26,10 @@ public class TransferResponseDTO {
 		this.toAccount = toAccount;
 	}
 	public double getTransferamount() {
-		return Transferamount;
+		return TransferAmount;
 	}
 	public void setTransferamount(double transferamount) {
-		Transferamount = transferamount;
+		TransferAmount = transferamount;
 	}
 	public double getSenderAvailableBalance() {
 		return senderAvailableBalance;
@@ -49,6 +54,12 @@ public class TransferResponseDTO {
 	}
 	public void setStatus(String status) {
 		this.status = status;
+	}
+	public String getInitiatedBy() {
+		return InitiatedBy;
+	}
+	public void setInitiatedBy(String initiatedBy) {
+		InitiatedBy = initiatedBy;
 	}
 
 }

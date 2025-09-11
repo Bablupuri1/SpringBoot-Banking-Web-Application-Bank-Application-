@@ -30,15 +30,21 @@ public class CustomerControllers {
 	@Autowired
 	private CustomerServiceImpl customerservice;
 
+	
 	// ------------------------------------------------------------------------------------------------------------
 	// POST: Transfer money between accounts
 	// ------------------------------------------------------------------------------------------------------------
 	@PostMapping("/transfer")
 	public ResponseEntity<ApiResponse<TransferResponseDTO>> transferMoney(@RequestBody TransferRequestDTO transferDTO) {
+		System.out.println("CustomerControllers.transferMoney()");
 		System.out.println("CustomerControllers.transferMoney()" + transferDTO.toString());
 		return customerservice.transferMoney(transferDTO);
 	}
 
+	
+	
+	
+	
 	// ------------------------------------------------------------------------------------------------------------
 	// GET: Check balance of an account
 	// ------------------------------------------------------------------------------------------------------------
@@ -47,6 +53,9 @@ public class CustomerControllers {
 		return customerservice.checkBalance(accountNumber);
 	}
 
+	
+	
+	
 	// ------------------------------------------------------------------------------------------------------------
 	// GET: Transactions by month range (HTML input type="month")
 	// ------------------------------------------------------------------------------------------------------------
@@ -59,6 +68,9 @@ public class CustomerControllers {
 
 		return customerservice.getTransactionsByMonthRange(accountNumber, month1, month2);
 	}
+	
+	
+	
 
 	// ------------------------------------------------------------------------------------------------------------
 	// GET: Transaction history by date-time range (HTML input
@@ -100,4 +112,19 @@ public class CustomerControllers {
 				"Transactions fetched successfully", transactions);
 		return new ResponseEntity<>(response, HttpStatus.OK);
 	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 }

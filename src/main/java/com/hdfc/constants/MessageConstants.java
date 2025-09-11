@@ -33,7 +33,7 @@ public class MessageConstants {
     public static final String INVALID_ACCOUNT_TYPE = "Invalid account type provided.";
     public static final String INVALID_CUSTOMER_ID = "Invalid customer ID.";
     public static  final String MONEY_TRANSFER_SUCCESSFULL="Money TransferSuccessfull..";
-    public static  final String WITHDRWAL_TRANSFER_SUCCESSFULL="Money TransferSuccessfull..";
+    public static  final String WITHDRWAL_TRANSFER_SUCCESSFULL="Money WIDTHRAW SUCCESSFULL....";
 
 
 

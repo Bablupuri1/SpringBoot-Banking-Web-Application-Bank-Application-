@@ -23,6 +23,7 @@ import com.hdfc.Model.Account;
 import com.hdfc.Model.Transaction;
 import com.hdfc.Repositories.AccountRepository;
 import com.hdfc.Repositories.TransactionRepository;
+import com.hdfc.TransactionManagement_Helper_class.TransactionManagement1;
 import com.hdfc.Utils.MaskAccount;
 import com.hdfc.constants.MessageConstants;
 
@@ -38,9 +39,10 @@ public class CustomerServiceImpl implements Customer_Common_Services {
 
 	@Autowired
 	private TransactionRepository transactionRepo;
-	
 
-	
+	@Autowired
+	private TransactionManagement1 transactionManagement;
+
 	// ------------------------------------------------------------------------------------------------------------
 	// TRANSFER MONEY
 	// ------------------------------------------------------------------------------------------------------------
@@ -83,12 +85,15 @@ public class CustomerServiceImpl implements Customer_Common_Services {
 
 		// Insufficient balance handling
 		if (fromAccount.getBalance() < transferAmount) {
-			saveFailedTransaction(fromAccount, toAccount, transferAmount, txnRef, userRemark);
+
+			transactionManagement.saveFailedTransaction(fromAccount, toAccount, transferAmount, txnRef, userRemark,
+					fromAccOpt.get().getCustomer().getName());
 			return new ResponseEntity<>(new ApiResponse<>(false, "Sender account has insufficient balance", null),
 					HttpStatus.BAD_REQUEST);
 		}
 
 		// Deduct and add balance
+
 		fromAccount.setBalance(fromAccount.getBalance() - transferAmount);
 		toAccount.setBalance(toAccount.getBalance() + transferAmount);
 		accountrepo.save(fromAccount);
@@ -96,7 +101,8 @@ public class CustomerServiceImpl implements Customer_Common_Services {
 		accountrepo.save(toAccount);
 
 		// Record transactions
-		saveTransaction(fromAccount, toAccount, transferAmount, txnRef, userRemark);
+		transactionManagement.saveTransaction(fromAccount, toAccount, transferAmount, txnRef, userRemark,
+				fromAccOpt.get().getCustomer().getName());
 
 		// Prepare response
 		TransferResponseDTO responseDTO = new TransferResponseDTO();
@@ -108,28 +114,23 @@ public class CustomerServiceImpl implements Customer_Common_Services {
 		responseDTO.setStatus("SUCCESS");
 		responseDTO.setMessage("Transfer completed successfully");
 
+		
 		ApiResponse<TransferResponseDTO> response = new ApiResponse<>(true, MessageConstants.MONEY_TRANSFER_SUCCESSFULL,
 				responseDTO);
 
 		return new ResponseEntity<>(response, HttpStatus.OK);
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
+
 	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 
 	// ------------------------------------------------------------------------------------------------------------
 	// CHECK BALANCE
@@ -152,65 +153,8 @@ public class CustomerServiceImpl implements Customer_Common_Services {
 
 		return new ResponseEntity<>(successResponse, HttpStatus.OK);
 	}
-	
-	
-	
 
-	// ------------------------------------------------------------------------------------------------------------
-	// TRANSACTIONS BY MONTH RANGE (HTML type="month")
-	// ------------------------------------------------------------------------------------------------------------
-	// @Override
-	// public List<TransactionResponseDTO> getTransactionsByMonthRange(String
-	// accountNumber, String month1, String month2) {
-	//
-	// YearMonth startYm = YearMonth.parse(month1);
-	// YearMonth endYm = YearMonth.parse(month2);
-	//
-	// LocalDateTime startDate = startYm.atDay(1).atStartOfDay();
-	// LocalDateTime endDate = endYm.atEndOfMonth().atTime(23, 59, 59);
-	//
-	// List<Transaction> transactions =
-	// transactionRepo.findTransactionsByAccountAndDateRange1(accountNumber,
-	// startDate, endDate);
-	//
-	// List<TransactionResponseDTO> dtoList = transactions.stream().map(tx -> {
-	// TransactionResponseDTO dto = new TransactionResponseDTO();
-	// dto.setDate(tx.getTransactionTime());
-	// dto.setReferenceNo(tx.getReferenceId());
-	//
-	// if ("FAILED".equalsIgnoreCase(tx.getStatus())) {
-	// dto.setDescription("FAILED - " + tx.getTransactionType());
-	// dto.setDebit(0.0);
-	// dto.setCredit(0.0);
-	// } else {
-	// dto.setDescription(tx.getTransactionType());
-	// if ("DEPOSIT".equalsIgnoreCase(tx.getTransactionType())
-	// || "CREDIT".equalsIgnoreCase(tx.getTransactionType())
-	// || "TRANSFER_RECEIVED".equalsIgnoreCase(tx.getTransactionType())) {
-	// dto.setCredit(tx.getAmount());
-	// dto.setDebit(null);
-	// } else if ("DEBIT".equalsIgnoreCase(tx.getTransactionType())
-	// || "WITHDRAWAL".equalsIgnoreCase(tx.getTransactionType())
-	// || "TRANSFER_SENT".equalsIgnoreCase(tx.getTransactionType())) {
-	// dto.setDebit(tx.getAmount());
-	// dto.setCredit(null);
-	// } else {
-	// dto.setDebit(null);
-	// dto.setCredit(null);
-	// }
-	// }
-	// dto.setBalance(tx.getAvailableBalance());
-	// return dto;
-	// }).toList();
-	//
-	// return dtoList;
-	// }
-	
-	
-	
-	
-	
-	
+
 
 	@Override
 	public List<TransactionResponseDTO> getTransactionsByMonthRange(String accountNumber, String month1,
@@ -276,145 +220,127 @@ public class CustomerServiceImpl implements Customer_Common_Services {
 			return "****";
 		return "****" + account.substring(account.length() - 4);
 	}
-	
-	
-	
 
 	// ------------------------------------------------------------------------------------------------------------
 	// TRANSACTIONS BY DATE RANGE (HTML type="datetime-local")
 	// ------------------------------------------------------------------------------------------------------------
-//	@Override
-//	public List<TransactionResponseHistroyDTO> getTransactionsByAccountAndDateRange(String accountNumber,
-//			LocalDateTime startDate, LocalDateTime endDate) {
-//
-//		List<Transaction> transactions = transactionRepo.findTransactionsByAccountAndDateRange(accountNumber, startDate,
-//				endDate);
-//
-//		DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-//		DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
-//
-//		List<TransactionResponseHistroyDTO> dtoList = new ArrayList<>();
-//
-//		for (Transaction txn : transactions) {
-//			boolean isDebit = txn.getFromAccount().equals(accountNumber)
-//					&& ("DEBIT".equalsIgnoreCase(txn.getTransactionType())
-//							|| "WITHDRAWAL".equalsIgnoreCase(txn.getTransactionType()));
-//			boolean isCredit = txn.getToAccount().equals(accountNumber)
-//					&& ("CREDIT".equalsIgnoreCase(txn.getTransactionType())
-//							|| "DEPOSIT".equalsIgnoreCase(txn.getTransactionType()));
-//
-//			if (isDebit || isCredit) {
-//				TransactionResponseHistroyDTO dto = new TransactionResponseHistroyDTO();
-//				dto.setTxnId(txn.getId());
-//				dto.setFromAccount(txn.getFromAccount());
-//				dto.setToAccount(txn.getToAccount());
-//				dto.setType(txn.getTransactionType());
-//				dto.setAmount(String.valueOf(txn.getAmount()));
-//				dto.setTransactionDate(txn.getTransactionTime().format(dateFormatter));
-//				dto.setTransactionTime(txn.getTransactionTime().format(timeFormatter));
-//				dto.setStatus(txn.getStatus());
-//				dto.setRemarks(txn.getRemarks());
-//				dto.setBalance(txn.getAvailableBalance());
-//				dto.setReferenceid(txn.getReferenceId());
-//				dto.setDescription(txn.getDescriptioncreditanddebit());
-//				dtoList.add(dto);
-//			}
-//		}
-//
-//		return dtoList;
-//	}
-//
-//	
-//	
-//	
-//	
-//	
-//	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-//	-------------******ya bhi sahi ho gya ab full and final--------------------------------------------------------------
-	
-	
-	//ye tab kam ayega jab range me nikalna ho
-	
+	// @Override
+	// public List<TransactionResponseHistroyDTO>
+	// getTransactionsByAccountAndDateRange(String accountNumber,
+	// LocalDateTime startDate, LocalDateTime endDate) {
+	//
+	// List<Transaction> transactions =
+	// transactionRepo.findTransactionsByAccountAndDateRange(accountNumber,
+	// startDate,
+	// endDate);
+	//
+	// DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+	// DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+	//
+	// List<TransactionResponseHistroyDTO> dtoList = new ArrayList<>();
+	//
+	// for (Transaction txn : transactions) {
+	// boolean isDebit = txn.getFromAccount().equals(accountNumber)
+	// && ("DEBIT".equalsIgnoreCase(txn.getTransactionType())
+	// || "WITHDRAWAL".equalsIgnoreCase(txn.getTransactionType()));
+	// boolean isCredit = txn.getToAccount().equals(accountNumber)
+	// && ("CREDIT".equalsIgnoreCase(txn.getTransactionType())
+	// || "DEPOSIT".equalsIgnoreCase(txn.getTransactionType()));
+	//
+	// if (isDebit || isCredit) {
+	// TransactionResponseHistroyDTO dto = new TransactionResponseHistroyDTO();
+	// dto.setTxnId(txn.getId());
+	// dto.setFromAccount(txn.getFromAccount());
+	// dto.setToAccount(txn.getToAccount());
+	// dto.setType(txn.getTransactionType());
+	// dto.setAmount(String.valueOf(txn.getAmount()));
+	// dto.setTransactionDate(txn.getTransactionTime().format(dateFormatter));
+	// dto.setTransactionTime(txn.getTransactionTime().format(timeFormatter));
+	// dto.setStatus(txn.getStatus());
+	// dto.setRemarks(txn.getRemarks());
+	// dto.setBalance(txn.getAvailableBalance());
+	// dto.setReferenceid(txn.getReferenceId());
+	// dto.setDescription(txn.getDescriptioncreditanddebit());
+	// dtoList.add(dto);
+	// }
+	// }
+	//
+	// return dtoList;
+	// }
+	//
+	//
+	//
+	//
+	//
+	//
+	//
+
+	// -------------******ya bhi sahi ho gya ab full and
+	// final--------------------------------------------------------------
+
+	// ye tab kam ayega jab range me nikalna ho
+
 	@Override
-	public List<TransactionResponseHistroyDTO> getTransactionsByAccountAndDateRange(
-	        String accountNumber,
-	        LocalDateTime startDate,
-	        LocalDateTime endDate) {
+	public List<TransactionResponseHistroyDTO> getTransactionsByAccountAndDateRange(String accountNumber,
+			LocalDateTime startDate, LocalDateTime endDate) {
 
-	    System.out.println("Fetching transactions for account: " + accountNumber);
-	    System.out.println("Start Date: " + startDate);
-	    System.out.println("End Date: " + endDate);
+		System.out.println("Fetching transactions for account: " + accountNumber);
+		System.out.println("Start Date: " + startDate);
+		System.out.println("End Date: " + endDate);
 
-	    List<Transaction> transactions = transactionRepo.findTransactionsByAccountAndDateRange(accountNumber, startDate, endDate);
-	    System.out.println("list of trans: " + transactions);
+		List<Transaction> transactions = transactionRepo.findTransactionsByAccountAndDateRange(accountNumber, startDate,
+				endDate);
+		System.out.println("list of trans: " + transactions);
 
-	    DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-	    DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+		DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+		DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
 
-	    List<TransactionResponseHistroyDTO> dtoList = new ArrayList<>();
+		List<TransactionResponseHistroyDTO> dtoList = new ArrayList<>();
 
-	    for (Transaction txn : transactions) {
-	        boolean isDebit = txn.getFromAccount().equals(accountNumber)
-	                && ("DEBIT".equalsIgnoreCase(txn.getTransactionType())
-	                    || "WITHDRAWAL".equalsIgnoreCase(txn.getTransactionType())
-	                    || "TRANSFER_SENT".equalsIgnoreCase(txn.getTransactionType()));
+		for (Transaction txn : transactions) {
+			boolean isDebit = txn.getFromAccount().equals(accountNumber)
+					&& ("DEBIT".equalsIgnoreCase(txn.getTransactionType())
+							|| "WITHDRAWAL".equalsIgnoreCase(txn.getTransactionType())
+							|| "TRANSFER_SENT".equalsIgnoreCase(txn.getTransactionType()));
 
-	        boolean isCredit = txn.getToAccount().equals(accountNumber)
-	                && ("CREDIT".equalsIgnoreCase(txn.getTransactionType())
-	                    || "DEPOSIT".equalsIgnoreCase(txn.getTransactionType())
-	                    || "TRANSFER_RECEIVED".equalsIgnoreCase(txn.getTransactionType()));
+			boolean isCredit = txn.getToAccount().equals(accountNumber)
+					&& ("CREDIT".equalsIgnoreCase(txn.getTransactionType())
+							|| "DEPOSIT".equalsIgnoreCase(txn.getTransactionType())
+							|| "TRANSFER_RECEIVED".equalsIgnoreCase(txn.getTransactionType()));
 
-	        if (isDebit || isCredit) {
-	            TransactionResponseHistroyDTO dto = new TransactionResponseHistroyDTO();
-	            dto.setTxnId(txn.getId());
-	            dto.setFromAccount(MaskAccount.maskAccount(txn.getFromAccount()));
-	            dto.setToAccount(MaskAccount.maskAccount(txn.getToAccount()));
-	            dto.setType(txn.getTransactionType());
-	            dto.setTransactionDate(txn.getTransactionTime().format(dateFormatter));
-	            dto.setTransactionTime(txn.getTransactionTime().format(timeFormatter));
-	            dto.setStatus(txn.getStatus());
-	            dto.setRemarks(txn.getRemarks());
-	            dto.setBalance(txn.getAvailableBalance());
-	            dto.setReferenceid(txn.getReferenceId());
-	            dto.setDescription(txn.getDescriptioncreditanddebit());
+			if (isDebit || isCredit) {
+				TransactionResponseHistroyDTO dto = new TransactionResponseHistroyDTO();
+				dto.setTxnId(txn.getId());
+				dto.setFromAccount(MaskAccount.maskAccount(txn.getFromAccount()));
+				dto.setToAccount(MaskAccount.maskAccount(txn.getToAccount()));
+				dto.setType(txn.getTransactionType());
+				dto.setTransactionDate(txn.getTransactionTime().format(dateFormatter));
+				dto.setTransactionTime(txn.getTransactionTime().format(timeFormatter));
+				dto.setStatus(txn.getStatus());
+				dto.setRemarks(txn.getRemarks());
+				dto.setBalance(txn.getAvailableBalance());
+				dto.setReferenceid(txn.getReferenceId());
+				dto.setDescription(txn.getDescriptioncreditanddebit());
 
-	            // ✅ Set debit/credit amount separately
-	            if (isDebit) {
-	                dto.setDebitAmount(String.valueOf(txn.getAmount()));
-	                dto.setCreditAmount("");
-	            } else if (isCredit) {
-	                dto.setCreditAmount(String.valueOf(txn.getAmount()));
-	                dto.setDebitAmount("");
-	            }
+				// ✅ Set debit/credit amount separately
+				if (isDebit) {
+					dto.setDebitAmount(String.valueOf(txn.getAmount()));
+					dto.setCreditAmount("");
+				} else if (isCredit) {
+					dto.setCreditAmount(String.valueOf(txn.getAmount()));
+					dto.setDebitAmount("");
+				}
 
-	            // Optional: still set generic amount if needed
-	            dto.setAmount(String.valueOf(txn.getAmount()));
+				// Optional: still set generic amount if needed
+				dto.setAmount(String.valueOf(txn.getAmount()));
 
-	            dtoList.add(dto);
-	        }
-	    }
+				dtoList.add(dto);
+			}
+		}
 
-	    return dtoList;
+		return dtoList;
 	}
 
-	
-	
-	
-	
-	
-	
-	
-	
 	// ------------------------------------------------------------------------------------------------------------
 	// ALL TRANSACTIONS FOR ACCOUNT
 	// ------------------------------------------------------------------------------------------------------------
@@ -422,9 +348,9 @@ public class CustomerServiceImpl implements Customer_Common_Services {
 	public List<TransactionResponseHistroyDTO> findTransactionsByAccount(String accountNumber) {
 
 		System.out.println("CustomerServiceImpl.findTransactionsByAccount()");
-		
+
 		List<Transaction> transactions = transactionRepo.findTransactionsByAccountNumber(accountNumber.trim());
-		System.out.println("transaction size:"+transactions.size());
+		System.out.println("transaction size:" + transactions.size());
 
 		System.out.println("_________________");
 		List<TransactionResponseHistroyDTO> dtoList = new ArrayList<>();
@@ -449,26 +375,18 @@ public class CustomerServiceImpl implements Customer_Common_Services {
 			if (!include)
 				continue;
 
-			
-			//this is for response in chrome browser
-			
+			// this is for response in chrome browser
+
 			TransactionResponseHistroyDTO dto = new TransactionResponseHistroyDTO();
-			
+
 			System.out.println("Transction response preparing.....");
-			
-			
-			
-			
-			
-			
-			
 
 			dto.setTxnId(txn.getId());
 			System.out.println(dto);
-//			dto.setFromAccount(MaskAccount.maskAccount(txn.getFromAccount()));
+			// dto.setFromAccount(MaskAccount.maskAccount(txn.getFromAccount()));
 			System.out.println(dto);
 
-			System.out.println("kiske me paia bhej rhe h:"+txn.getToAccount());
+			System.out.println("kiske me paia bhej rhe h:" + txn.getToAccount());
 
 			dto.setToAccount(MaskAccount.maskAccount(txn.getToAccount()));
 			dto.setFromAccount(MaskAccount.maskAccount(accountNumber));
@@ -477,7 +395,6 @@ public class CustomerServiceImpl implements Customer_Common_Services {
 
 			dto.setType(txn.getTransactionType());
 			System.out.println(dto);
-
 
 			dto.setAmount(("DEBIT".equalsIgnoreCase(txn.getTransactionType()) ? "-" : "+") + txn.getAmount());
 
@@ -509,108 +426,10 @@ public class CustomerServiceImpl implements Customer_Common_Services {
 		return dtoList;
 	}
 
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	// ------------------------------------------------------------------------------------------------------------
 	// HELPER METHODS
 	// ------------------------------------------------------------------------------------------------------------
 
 	// Save successful debit and credit transactions
-	private void saveTransaction(Account fromAccount, Account toAccount, double amount, String txnRef,
-			String userRemark) {
-		Transaction debitTxn = new Transaction();
-		debitTxn.setReferenceId(txnRef);
-		debitTxn.setAccount(fromAccount);
-		debitTxn.setFromAccount(fromAccount.getAccountNumber());
-		debitTxn.setToAccount(toAccount.getAccountNumber());
-		debitTxn.setTransactionType("DEBIT");
-		debitTxn.setAmount(amount);
-		debitTxn.setAvailableBalance(fromAccount.getBalance());
-		debitTxn.setChannel("ONLINE");
-		debitTxn.setInitiatedBy(fromAccount.getCustomer().getName());
-		debitTxn.setRemarks(userRemark != null ? userRemark
-				: "Transferred to " + MaskAccount.maskAccount(toAccount.getAccountNumber()));
-		debitTxn.setStatus("SUCCESS");
-		debitTxn.setTransactionTime(LocalDateTime.now());
-		debitTxn.setDescriptioncreditanddebit("Money Transfered..");
-		transactionRepo.save(debitTxn);
 
-		Transaction creditTxn = new Transaction();
-		creditTxn.setReferenceId(txnRef);
-		creditTxn.setAccount(toAccount);
-		creditTxn.setFromAccount(fromAccount.getAccountNumber());
-		creditTxn.setToAccount(toAccount.getAccountNumber());
-		creditTxn.setTransactionType("CREDIT");
-		creditTxn.setAmount(amount);
-		creditTxn.setAvailableBalance(toAccount.getBalance());
-		creditTxn.setChannel("ONLINE");
-		creditTxn.setInitiatedBy(fromAccount.getCustomer().getName());
-		creditTxn.setRemarks(userRemark != null ? userRemark
-				: "Received from " + MaskAccount.maskAccount(fromAccount.getAccountNumber()));
-		creditTxn.setStatus("SUCCESS");
-		creditTxn.setTransactionTime(LocalDateTime.now());
-		creditTxn.setDescriptioncreditanddebit("Money Received..");
-		transactionRepo.save(creditTxn);
-	}
-
-	// Save failed transactions for insufficient balance
-	private void saveFailedTransaction(Account fromAccount, Account toAccount, double amount, String txnRef,
-			String userRemark) {
-		Transaction failedDebit = new Transaction();
-		failedDebit.setReferenceId(txnRef);
-		failedDebit.setAccount(fromAccount);
-		failedDebit.setFromAccount(fromAccount.getAccountNumber());
-		failedDebit.setToAccount(toAccount.getAccountNumber());
-		failedDebit.setTransactionType("DEBIT");
-		failedDebit.setAmount(amount);
-		failedDebit.setAvailableBalance(fromAccount.getBalance());
-		failedDebit.setChannel("ONLINE");
-		failedDebit.setInitiatedBy(fromAccount.getCustomer().getName());
-		failedDebit.setRemarks(userRemark != null ? userRemark : "Failed transfer to " + toAccount.getAccountNumber());
-		failedDebit.setStatus("FAILED");
-		failedDebit.setTransactionTime(LocalDateTime.now());
-		failedDebit.setDescriptioncreditanddebit("Failed Becouse Insufficient Balance..");
-		transactionRepo.save(failedDebit);
-
-		Transaction failedCredit = new Transaction();
-		failedCredit.setReferenceId(txnRef);
-		failedCredit.setAccount(toAccount);
-		failedCredit.setFromAccount(fromAccount.getAccountNumber());
-		failedCredit.setToAccount(toAccount.getAccountNumber());
-		failedCredit.setTransactionType("CREDIT");
-		failedCredit.setAmount(amount);
-		failedCredit.setAvailableBalance(toAccount.getBalance());
-		failedCredit.setChannel("ONLINE");
-		failedCredit.setInitiatedBy(fromAccount.getCustomer().getName());
-		failedCredit
-				.setRemarks(userRemark != null ? userRemark : "Failed transfer from " + fromAccount.getAccountNumber());
-		failedCredit.setStatus("FAILED");
-		failedCredit.setTransactionTime(LocalDateTime.now());
-		failedCredit.setDescriptioncreditanddebit("Money Not Receeiver Becouse Sender Does not Have Balance.");
-		transactionRepo.save(failedCredit);
-	}
 }

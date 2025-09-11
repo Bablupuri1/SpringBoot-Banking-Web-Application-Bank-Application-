@@ -34,6 +34,8 @@ import com.hdfc.DTO.DepositRequestDTO;
 import com.hdfc.DTO.DepositResponseDTO;
 import com.hdfc.DTO.MiniStatementDTO;
 import com.hdfc.DTO.TransactionResponseDTO;
+import com.hdfc.DTO.TransferRequestDTO;
+import com.hdfc.DTO.TransferResponseDTO;
 import com.hdfc.DTO.WithdrawRequestDTO;
 import com.hdfc.DTO.WithdrawResponseDTO;
 import com.hdfc.Model.Account;
@@ -43,7 +45,7 @@ import com.hdfc.Services_Admin.AdminService;
 
 @RestController
 @RequestMapping("/api/admin")
-@CrossOrigin(origins = "http://localhost:5174") // सिर्फ React के लिए allow
+@CrossOrigin(origins = "http://localhost:5173") // सिर्फ React के लिए allow
 public class AdminController {
 
 	// private AdminService1 adminService;
@@ -69,10 +71,16 @@ public class AdminController {
 		System.out.println("AdminController.deposit()");
 		return adminService.depositToAccount(request);
 	}
+	
+	
+	
+	
+	
 
 	@PostMapping("/withdraw")
-	public ResponseEntity<ApiResponse<WithdrawResponseDTO>> withdrawFromAccount(WithdrawRequestDTO request) {
+	public ResponseEntity<ApiResponse<WithdrawResponseDTO>> withdrawFromAccount(@RequestBody WithdrawRequestDTO request) {
 
+		System.out.println("AdminController.withdrawFromAccount()");
 		ResponseEntity<ApiResponse<WithdrawResponseDTO>> withdrawFromAccount = adminService
 				.withdrawFromAccount(request);
 
@@ -80,10 +88,17 @@ public class AdminController {
 	}
 
 	
+	//now we need to create api for Transfer Money Between Two account
 	
 	
 	
 	
+	@PostMapping("/transferBetweenAccount")
+	public ResponseEntity<ApiResponse<TransferResponseDTO>> transferMoney(@RequestBody TransferRequestDTO transferDTO) {
+		System.out.println("CustomerControllers.transferMoney()");
+		System.out.println("CustomerControllers.transferMoney()" + transferDTO.toString());
+		return adminService.transferMoney(transferDTO);
+	}
 	
 	
 	

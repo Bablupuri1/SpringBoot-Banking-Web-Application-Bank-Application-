@@ -7,6 +7,7 @@ import java.time.YearMonth;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,8 @@ import com.hdfc.DTO.DepositRequestDTO;
 import com.hdfc.DTO.DepositResponseDTO;
 import com.hdfc.DTO.MiniStatementDTO;
 import com.hdfc.DTO.TransactionResponseDTO;
+import com.hdfc.DTO.TransferRequestDTO;
+import com.hdfc.DTO.TransferResponseDTO;
 import com.hdfc.DTO.WithdrawRequestDTO;
 import com.hdfc.DTO.WithdrawResponseDTO;
 import com.hdfc.Model.Account;
@@ -37,7 +40,9 @@ import com.hdfc.Repositories.AccountRepository;
 import com.hdfc.Repositories.CustomerRepository;
 import com.hdfc.Repositories.TransactionRepository;
 import com.hdfc.TransactionManagement_Helper_class.TransactionManagement;
+import com.hdfc.TransactionManagement_Helper_class.TransactionManagement1;
 import com.hdfc.Utils.GeneratorUtil;
+import com.hdfc.Utils.MaskAccount;
 import com.hdfc.constants.MessageConstants;
 
 // Marking the class as a Spring service
@@ -62,6 +67,9 @@ public class AdminService implements AdminAccount_common_Services {
 	TransactionManagement transactionManagement;
 
 	@Autowired
+	private TransactionManagement1 transactionManagements;
+
+	@Autowired
 	EmailService emailservice;
 
 	// Method to validate customer inputs
@@ -72,20 +80,23 @@ public class AdminService implements AdminAccount_common_Services {
 		ApiResponse<CustomerResponseCredentialDTO> response;
 
 		// Check if name is empty
-		if (requestDto.getName() == null || requestDto.getName().trim().isEmpty()) {
+		if (requestDto.getName() == null || requestDto.getName().trim().isEmpty() || requestDto.getName() == " "
+				|| requestDto.getName() == "") {
 			response = new ApiResponse<>(false, MessageConstants.NAME_CANNOT_BE_EMPTY, null);
 			return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
 
 		}
 
 		// Check if email is empty
-		if (requestDto.getEmail() == null || requestDto.getEmail().trim().isEmpty()) {
+		if (requestDto.getEmail() == null || requestDto.getEmail().trim().isEmpty() || requestDto.getEmail() == " "
+				|| requestDto.getEmail() == "") {
 			response = new ApiResponse<>(false, MessageConstants.EMAIL_CANNOT_BE_EMPTY, null);
 			return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
 		}
 
 		// Check if phone is empty
-		if (requestDto.getPhone() == null || requestDto.getPhone().trim().isEmpty()) {
+		if (requestDto.getPhone() == null || requestDto.getPhone().trim().isEmpty() || requestDto.getPhone() == " "
+				|| requestDto.getPhone() == "") {
 			response = new ApiResponse<>(false, MessageConstants.PHONE_CANNOT_BE_EMPTY, null);
 			return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
 		}
@@ -139,12 +150,9 @@ public class AdminService implements AdminAccount_common_Services {
 			ApiResponse<CustomerResponseCredentialDTO> response = new ApiResponse<>(false,
 					MessageConstants.PHONE_ALREADY_EXISTS, null);
 			return new ResponseEntity<>(response, HttpStatus.CONFLICT);
-			
-			
+
 		}
 
-		
-		
 		// Validate input fields
 		ResponseEntity<ApiResponse<CustomerResponseCredentialDTO>> validationResult = validateCustomerInput(requestDto);
 		if (validationResult != null) {
@@ -212,125 +220,101 @@ public class AdminService implements AdminAccount_common_Services {
 	}
 
 	// ______________________DEPOSIT HANDLER__________________________
-
 	@Override
 	public ResponseEntity<ApiResponse<DepositResponseDTO>> depositToAccount(DepositRequestDTO request) {
 		System.out.println("AdminService.depositToAccount()");
 
-		// Find account by account number
+		// Validate input
+		if (request.getAccountNumber() == null || request.getAccountNumber().isEmpty()) {
+			return ResponseEntity.badRequest().body(new ApiResponse<>(false, "Account number is required.", null));
+		}
+
+		if (request.getAmount() <= 0) {
+			return ResponseEntity.badRequest()
+					.body(new ApiResponse<>(false, "Invalid amount. Please enter a positive amount.", null));
+		}
+
+		// Find account
 		Optional<Account> optionalAccount = accountrepo.findByAccountNumber(request.getAccountNumber());
 
-		if (optionalAccount.isPresent()) {
-			System.out.println("Account Number Valid............");
-
-			Account account = optionalAccount.get();
-
-			// First of all check the given amount
-			if (request.getAmount() <= 0) {
-				System.out.println("Invalid amount: " + request.getAmount());
-				ApiResponse<DepositResponseDTO> invalidAmountResponse = new ApiResponse<>(false,
-						"Invalid amount. Please enter a positive amount.", null);
-				return new ResponseEntity<>(invalidAmountResponse, HttpStatus.BAD_REQUEST);
-			}
-
-			System.out.println("Previous Balance: " + account.getBalance());
-
-			// Update new balance
-			double newBalance = account.getBalance() + request.getAmount();
-			account.setBalance(newBalance);
-			accountrepo.save(account); // Save updated balance
-			
-
-			// ___________________________________________________________
-
-			// Create transaction record
-			Transaction transaction = new Transaction();
-			transaction.setAccount(account);
-			transaction.setFromAccount("ADMIN101"); // Admin as sender
-			transaction.setToAccount(account.getAccountNumber());
-			transaction.setTransactionType("DEPOSIT");
-			transaction.setAmount(request.getAmount());
-			transaction.setAvailableBalance(newBalance);
-			transaction.setChannel("BRANCH");
-			transaction.setInitiatedBy("ADMIN");
-			transaction.setRemarks(request.getRemarks());
-			transaction.setStatus("SUCCESS");
-			transaction.setTransactionTime(LocalDateTime.now());
-			transaction.setDescriptioncreditanddebit("ADMIN_DEPOSIT");
-
-			transactionRepo.save(transaction); // Save transaction
-
-			
-			
-			
-			
-			//first of all send email to the customers for security purpose 
-			//so user can easily get the iformation about bank lates bank  balance 
-			// ________________________________________________________________________
-
-			
-			try {
-				String name=account.getCustomer().getName();
-				String email = account.getCustomer().getEmail();
-				String customerId = account.getCustomer().getCustomerId();
-				String accountNumber = account.getAccountNumber();
-				
-
-				emailservice.sendUserCredentials(email, name,
-						customerId, accountNumber,request.getAmount(),account.getBalance());
-				
-			} catch (Exception e) {
-				e.printStackTrace(); // Email failed, but account is already created
-
-				ApiResponse<DepositResponseDTO> response = new ApiResponse<>(false,
-						"Money Deposited successfully...", null);
-				return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-
-			}
-			
-			
-			
-			
-			
-			
-			
-			// Prepare deposit response DTO
-			String customerName = account.getCustomer().getName();
-
-			DepositResponseDTO responseDTO = new DepositResponseDTO(account.getAccountNumber(), customerName,
-					newBalance, MessageConstants.DEPOSITE_AMMOUNT_ADDED_IN_YOURACCOUNT);
-
-			// Wrap in ApiResponse and return
-			ApiResponse<DepositResponseDTO> response = new ApiResponse<>(true,
-					MessageConstants.DEPOSITE_AMMOUNT_ADDED_IN_YOURACCOUNT, responseDTO);
-
-			return new ResponseEntity<>(response, HttpStatus.OK);
-
-		} else {
-			// Account not found
-			ApiResponse<DepositResponseDTO> response1 = new ApiResponse<>(false,
-					MessageConstants.ACCOUNT_DOES_NOT_EXISTS, null);
-			return new ResponseEntity<>(response1, HttpStatus.NOT_FOUND);
+		if (!optionalAccount.isPresent()) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND)
+					.body(new ApiResponse<>(false, MessageConstants.ACCOUNT_DOES_NOT_EXISTS, null));
 		}
+
+		Account account = optionalAccount.get();
+
+		// Optional: Check if account is active
+		if (!account.isActive()) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN)
+					.body(new ApiResponse<>(false, "Account is inactive or frozen.", null));
+		}
+
+		// Optional: Check for maximum deposit limit
+		if (request.getAmount() > 100000) {
+			return ResponseEntity.badRequest()
+					.body(new ApiResponse<>(false, "Deposit amount exceeds allowed limit.", null));
+		}
+
+		// Update balance
+		double newBalance = account.getBalance() + request.getAmount();
+		account.setBalance(newBalance);
+		accountrepo.save(account);
+
+		// Create transaction
+		Transaction transaction = new Transaction();
+		transaction.setAccount(account);
+		transaction.setFromAccount("ADMIN101");
+		transaction.setToAccount(account.getAccountNumber());
+		transaction.setTransactionType("DEPOSIT");
+		transaction.setAmount(request.getAmount());
+		transaction.setAvailableBalance(newBalance);
+		transaction.setChannel("BRANCH");
+		transaction.setInitiatedBy("ADMIN");
+		transaction.setRemarks(request.getRemarks());
+		transaction.setStatus("SUCCESS");
+		transaction.setTransactionTime(LocalDateTime.now());
+		transaction.setDescriptioncreditanddebit("ADMIN_DEPOSIT");
+
+		try {
+			transactionRepo.save(transaction);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+					.body(new ApiResponse<>(false, "Transaction logging failed.", null));
+		}
+
+		// Send email notification
+		boolean emailSent = true;
+		try {
+			String name = account.getCustomer().getName();
+			String email = account.getCustomer().getEmail();
+			String customerId = account.getCustomer().getCustomerId();
+			String accountNumber = account.getAccountNumber();
+
+			emailservice.sendUserCredentials(email, name, customerId, accountNumber, request.getAmount(), newBalance);
+		} catch (Exception e) {
+			e.printStackTrace();
+			emailSent = false;
+		}
+
+		// Prepare response
+		String customerName = account.getCustomer().getName();
+		DepositResponseDTO responseDTO = new DepositResponseDTO(account.getAccountNumber(), customerName, newBalance,
+				MessageConstants.DEPOSITE_AMMOUNT_ADDED_IN_YOURACCOUNT);
+
+		String finalMessage = emailSent ? MessageConstants.DEPOSITE_AMMOUNT_ADDED_IN_YOURACCOUNT
+				: "Deposit successful, but email notification failed.";
+
+		return ResponseEntity.ok(new ApiResponse<>(true, finalMessage, responseDTO));
 	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 
 	// _________________WITHDRAWL HANDLER______________________________
 
 	@Override
 	public ResponseEntity<ApiResponse<WithdrawResponseDTO>> withdrawFromAccount(WithdrawRequestDTO request) {
 
+		System.out.println("AdminService.withdrawFromAccount()");
 		// 1. Validate amount
 		if (request.getAmount() <= 0) {
 			return new ResponseEntity<>(new ApiResponse<>(false, "Amount must be greater than 0", null),
@@ -349,7 +333,7 @@ public class AdminService implements AdminAccount_common_Services {
 		if (account.getBalance() < request.getAmount()) {
 			Transaction txn = transactionManagement.recordTransaction1(account, account.getAccountNumber(),
 					account.getAccountNumber(), "DEBIT", request.getAmount(), account.getBalance(), "ONLINE", "ADMIN",
-					"WIDTHRAWL FAILED DUE TO INSUFFICIENT BALANCE", "FAILED", LocalDateTime.now(), "WITHDRAWAL"
+					"WITHDRAWAL FAILED DUE TO INSUFFICIENT BALANCE", "FAILED", LocalDateTime.now(), "WITHDRAWAL"
 
 			);
 
@@ -362,7 +346,8 @@ public class AdminService implements AdminAccount_common_Services {
 			dto.setAvailableBalance(account.getBalance());
 			dto.setStatus("FAILED");
 			dto.setTransactionRef(txn.getReferenceId());
-
+			dto.setInitiated("ADMIN");
+			;
 			return new ResponseEntity<>(new ApiResponse<>(false, "Insufficient balance", dto), HttpStatus.BAD_REQUEST);
 		}
 
@@ -375,7 +360,7 @@ public class AdminService implements AdminAccount_common_Services {
 
 		Transaction txn = transactionManagement.recordTransaction1(account, account.getAccountNumber(),
 				account.getAccountNumber(), "DEBIT", request.getAmount(), account.getBalance(), "ONLINE", "ADMIN",
-				"WIDTHRAWL SUCCESSFULL", "SUCCESS", LocalDateTime.now(), "WITHDRAWAL"
+				"WITHDRAWAL SUCCESSFUL", "SUCCESS", LocalDateTime.now(), "WITHDRAWAL"
 
 		);
 
@@ -390,11 +375,90 @@ public class AdminService implements AdminAccount_common_Services {
 		dto.setAvailableBalance(account.getBalance());
 		dto.setStatus("SUCCESS");
 		dto.setTransactionRef(txn.getReferenceId());
+		dto.setInitiated("ADMIN");
 
 		ApiResponse<WithdrawResponseDTO> withdrawresponse = new ApiResponse<>(true,
 				MessageConstants.WITHDRWAL_TRANSFER_SUCCESSFULL, dto);
 
 		return new ResponseEntity<>(withdrawresponse, HttpStatus.OK);
+
+	}
+
+	// now create Api for Transfer Money
+
+	@Override
+	public ResponseEntity<ApiResponse<TransferResponseDTO>> transferMoney(TransferRequestDTO transferDTO) {
+
+		System.out.println("CustomerServiceImpl.transferMoney()");
+		double transferAmount = transferDTO.getAmounts();
+
+		// Validate transfer amount
+		if (transferAmount <= 0) {
+			System.out.println("CustomerServiceImpl.transferMoney()");
+
+			return new ResponseEntity<>(new ApiResponse<>(false, "Amount must be greater than 0", null),
+					HttpStatus.BAD_REQUEST);
+		}
+
+		// Validate sender account
+		Optional<Account> fromAccOpt = accountrepo.findByAccountNumber(transferDTO.getFromAccount());
+		if (fromAccOpt.isEmpty()) {
+			return new ResponseEntity<>(new ApiResponse<>(false, "Sender account does not exist", null),
+					HttpStatus.NOT_FOUND);
+		}
+
+		// Validate receiver account
+		Optional<Account> toAccOpt = accountrepo.findByAccountNumber(transferDTO.getToAccount());
+		if (toAccOpt.isEmpty()) {
+			return new ResponseEntity<>(new ApiResponse<>(false, "Receiver account does not exist", null),
+					HttpStatus.NOT_FOUND);
+		}
+		
+		
+
+		Account fromAccount = fromAccOpt.get();
+		Account toAccount = toAccOpt.get();
+
+		// Generate transaction reference ID
+		String txnRef = UUID.randomUUID().toString();
+		String userRemark = (transferDTO.getRemarks() != null && !transferDTO.getRemarks().isBlank())
+				? transferDTO.getRemarks()
+				: null;
+
+		// Insufficient balance handling
+		if (fromAccount.getBalance() < transferAmount) {
+			transactionManagements.saveFailedTransaction(fromAccount, toAccount, transferAmount, txnRef, userRemark,"ADMIN");
+			return new ResponseEntity<>(new ApiResponse<>(false, "Sender account has insufficient balance", null),
+					HttpStatus.BAD_REQUEST);
+		}
+
+		// Deduct and add balance
+
+		fromAccount.setBalance(fromAccount.getBalance() - transferAmount);
+		toAccount.setBalance(toAccount.getBalance() + transferAmount);
+		accountrepo.save(fromAccount);
+
+		accountrepo.save(toAccount);
+
+		// Record transactions
+		transactionManagements.saveTransaction(fromAccount, toAccount, transferAmount, txnRef, userRemark,"ADMIN");
+
+		// Prepare response
+		TransferResponseDTO responseDTO = new TransferResponseDTO();
+		responseDTO.setFromAccount(MaskAccount.maskAccount(fromAccount.getAccountNumber()));
+		responseDTO.setToAccount(MaskAccount.maskAccount(toAccount.getAccountNumber()));
+		responseDTO.setTransferamount(transferAmount);
+		responseDTO.setSenderAvailableBalance(fromAccount.getBalance());
+		responseDTO.setReferenceId(txnRef);
+		responseDTO.setStatus("SUCCESS");
+		responseDTO.setMessage("Transfer completed successfully");
+		responseDTO.setInitiatedBy("ADMIN");
+		
+
+		ApiResponse<TransferResponseDTO> response = new ApiResponse<>(true, MessageConstants.MONEY_TRANSFER_SUCCESSFULL,
+				responseDTO);
+
+		return new ResponseEntity<>(response, HttpStatus.OK);
 
 	}
 

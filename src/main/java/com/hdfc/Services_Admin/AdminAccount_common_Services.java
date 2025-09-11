@@ -15,6 +15,8 @@ import com.hdfc.DTO.DepositRequestDTO;
 import com.hdfc.DTO.DepositResponseDTO;
 import com.hdfc.DTO.MiniStatementDTO;
 import com.hdfc.DTO.TransactionResponseDTO;
+import com.hdfc.DTO.TransferRequestDTO;
+import com.hdfc.DTO.TransferResponseDTO;
 import com.hdfc.DTO.WithdrawRequestDTO;
 import com.hdfc.DTO.WithdrawResponseDTO;
 import com.hdfc.Model.Account;
@@ -47,6 +49,26 @@ public interface AdminAccount_common_Services {
 
     //  Get All Accounts with Pagination
     public Page<Account> getAllAccounts(int page, int size);
+    
+    
+    
+    
+    
+    //this method is responsible  for transfer money between two account
+    
+	public ResponseEntity<ApiResponse<TransferResponseDTO>> transferMoney(TransferRequestDTO transferDTO) ;
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     //get all customers with pagination
     public Page<Customer> getAllCustomers(int page, int size);

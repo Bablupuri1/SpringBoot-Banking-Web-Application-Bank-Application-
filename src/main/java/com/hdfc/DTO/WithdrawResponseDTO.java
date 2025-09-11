@@ -5,6 +5,7 @@ public class WithdrawResponseDTO {
     private double availableBalance;
     private String status;
     private String transactionRef;
+    private String Initiated;
 
 
 
@@ -37,6 +38,12 @@ public class WithdrawResponseDTO {
 	}
 	public void setTransactionRef(String transactionRef) {
 		this.transactionRef = transactionRef;
+	}
+	public String getInitiated() {
+		return Initiated;
+	}
+	public void setInitiated(String initiated) {
+		Initiated = initiated;
 	}
 
 
