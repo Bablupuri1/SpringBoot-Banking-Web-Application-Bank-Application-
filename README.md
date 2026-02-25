@@ -61,8 +61,11 @@ Other Tools: JavaMail API
 📊 Spring Boot Actuator + Prometheus + Grafana for monitoring & alerting
 
 🎥 Demo
+
+ℹ️ For demo purposes, the Admin panel is accessible without login.  
+Visitors can create customer accounts, receive credentials via email, and then log in as a User to experience the full application flow.
+
 📅 Launching on 30th August  
-🔗 GitHub Repository: Coming Soon  
 🔗 Live UI Link: Coming Soon
 
 💡 My Learning Experience
